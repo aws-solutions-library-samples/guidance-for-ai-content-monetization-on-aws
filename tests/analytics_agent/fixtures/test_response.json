@@ -1,0 +1,9 @@
+{
+  "response": "Hello! I'm the analytics agent deployed to AgentCore, ready to help with your analytics needs.",
+  "intent_analysis": {
+    "primary_intent": "greeting",
+    "confidence": 0.9
+  },
+  "model_used": "Analytics Agent via AgentCore",
+  "deployment_test": true
+}

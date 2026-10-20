@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Environment Variables</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .env-var { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .correct { background-color: #d4edda; }
+        .incorrect { background-color: #f8d7da; }
+        pre { background: #f8f9fa; padding: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Environment Variables Debug</h1>
+    <div id="env-vars">Loading...</div>
+    
+    <script type="module">
+        // This simulates how Vite loads environment variables
+        const envVars = {
+            'VITE_API_BASE_URL': import.meta.env.VITE_API_BASE_URL,
+            'VITE_AWS_REGION': import.meta.env.VITE_AWS_REGION,
+            'VITE_USER_POOL_ID': import.meta.env.VITE_USER_POOL_ID,
+            'VITE_USER_POOL_CLIENT_ID': import.meta.env.VITE_USER_POOL_CLIENT_ID,
+            'VITE_MEDIALAKE_USER_POOL_ID': import.meta.env.VITE_MEDIALAKE_USER_POOL_ID,
+            'VITE_MEDIALAKE_USER_POOL_CLIENT_ID': import.meta.env.VITE_MEDIALAKE_USER_POOL_CLIENT_ID,
+            'VITE_ENABLE_MOCK_DATA': import.meta.env.VITE_ENABLE_MOCK_DATA,
+            'VITE_USE_AWS_BACKEND': import.meta.env.VITE_USE_AWS_BACKEND
+        };
+        
+        let html = '<h2>Current Environment Variables:</h2>';
+        
+        for (const [key, value] of Object.entries(envVars)) {
+            const isCorrect = 
+                (key === 'VITE_API_BASE_URL' && value && value.includes('amazonaws.com')) ||
+                (key === 'VITE_MEDIALAKE_USER_POOL_ID' && value === 'us-west-2_EXAMPLE02') ||
+                (key === 'VITE_ENABLE_MOCK_DATA' && value === 'false') ||
+                (key === 'VITE_USE_AWS_BACKEND' && value === 'true') ||
+                (key !== 'VITE_API_BASE_URL' && key !== 'VITE_MEDIALAKE_USER_POOL_ID' && key !== 'VITE_ENABLE_MOCK_DATA' && key !== 'VITE_USE_AWS_BACKEND');
+                
+            html += `<div class="env-var ${isCorrect ? 'correct' : 'incorrect'}">
+                <strong>${key}:</strong> ${value || 'undefined'}
+            </div>`;
+        }
+        
+        html += '<h2>Expected Values:</h2>';
+        html += '<div class="env-var correct"><strong>VITE_API_BASE_URL:</strong> https://example123.execute-api.us-west-2.amazonaws.com/v1</div>';
+        html += '<div class="env-var correct"><strong>VITE_MEDIALAKE_USER_POOL_ID:</strong> us-west-2_EXAMPLE02</div>';
+        html += '<div class="env-var correct"><strong>VITE_ENABLE_MOCK_DATA:</strong> false</div>';
+        html += '<div class="env-var correct"><strong>VITE_USE_AWS_BACKEND:</strong> true</div>';
+        
+        html += '<h2>Troubleshooting:</h2>';
+        html += '<ul>';
+        html += '<li>If VITE_API_BASE_URL is undefined or localhost:5001, restart your dev server</li>';
+        html += '<li>If values are still wrong, check that .env file is in the ui/ directory</li>';
+        html += '<li>Make sure there are no spaces around the = in .env file</li>';
+        html += '<li>Try clearing browser cache and hard refresh (Ctrl+Shift+R)</li>';
+        html += '</ul>';
+        
+        document.getElementById('env-vars').innerHTML = html;
+    </script>
+</body>
+</html>

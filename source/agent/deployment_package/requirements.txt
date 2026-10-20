@@ -1,0 +1,25 @@
+# Strands Agent dependencies
+strands-agents>=0.1.0
+strands-agents-tools>=0.1.0
+
+# LLM Provider dependencies (optional, install as needed)
+# strands-agents[ollama]     # For local Ollama models
+# strands-agents[anthropic]  # For Anthropic Claude models
+# strands-agents[litellm]    # For OpenAI and other models via LiteLLM
+
+# Core dependencies
+httpx>=0.25.0
+pydantic>=2.0.0
+python-dotenv>=1.0.0
+
+# AWS dependencies (for Bedrock - default provider)
+boto3>=1.34.0
+botocore>=1.34.0
+
+# Additional dependencies for analytics
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Local API server dependencies
+flask>=2.3.0
+flask-cors>=4.0.0

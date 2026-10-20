@@ -1,0 +1,8 @@
+{
+  "title": "JSON Publishing",
+  "content_type": "article",
+  "content_markdown": "# Source Heading\n\nUse the [relative guide](../guide) safely.\n\n![JSON diagram](https://cdn.example.com/json.png)\n\n## Facts\n\n- Complete\n- Deterministic",
+  "canonical_url": "https://Example.com/articles/2026/item?tracking=1",
+  "author": "Ankit Patel",
+  "tags": ["markdown", "publishing"]
+}

@@ -1,0 +1,62 @@
+{
+    "article": {
+        "id": "article123456",
+        "metadata": {
+            "publishDate": "2024-04-15T10:30:00Z",
+            "lastModified": "2024-04-15T11:45:00Z",
+            "authors": ["Jane Smith", "John Doe"],
+            "section": "Technology",
+            "category": ["AI", "Digital Transformation"],
+            "tags": ["artificial intelligence", "machine learning", "tech news"],
+            "status": "published"
+        },
+        "content": {
+            "headline": "AI Revolutionizes Healthcare Delivery",
+            "subheadline": "New ML models show promising results in early disease detection",
+            "summary": "A brief overview of the article's main points...",
+            "body": {
+                "type": "richtext",
+                "value": "The full article content with HTML markup...",
+                "plainText": "Clean text version of the article..."
+            },
+            "seo": {
+                "metaTitle": "AI in Healthcare: Revolutionary Changes in 2024",
+                "metaDescription": "Learn how artificial intelligence is transforming healthcare...",
+                "keywords": ["healthcare AI", "medical technology", "disease detection"]
+            }
+        },
+        "media": {
+            "featuredImage": {
+                "url": "https://example.com/images/article123456/main.jpg",
+                "caption": "AI system analyzing medical images",
+                "altText": "Doctor reviewing AI analysis results",
+                "credit": "Photo by Medical Imaging Corp"
+            },
+            "additionalImages": [
+                {
+                    "url": "https://example.com/images/article123456/image1.jpg",
+                    "caption": "Laboratory testing setup",
+                    "altText": "Laboratory equipment used in AI testing"
+                }
+            ],
+            "videos": [
+                {
+                    "url": "https://example.com/videos/article123456/demo.mp4",
+                    "title": "AI System Demo",
+                    "duration": "2:30"
+                }
+            ]
+        },
+        "analytics": {
+            "pageViews": 1500,
+            "timeOnPage": "4:30",
+            "socialShares": 250,
+            "contentScore": 85
+        },
+        "relationships": {
+            "relatedArticles": ["article123457", "article123458"],
+            "series": "AI in Healthcare Series",
+            "campaign": "Future of Medicine 2024"
+        }
+    }
+}

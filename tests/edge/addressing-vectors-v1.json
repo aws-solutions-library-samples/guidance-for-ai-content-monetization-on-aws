@@ -1,0 +1,162 @@
+{
+  "schema_version": "1.0",
+  "description": "Pure-string publisher path to central Markdown object addressing vectors",
+  "vectors": [
+    {
+      "name": "root",
+      "host": "news.example.com",
+      "uri": "/",
+      "expected_uri": "/content/news.example.com/index.md"
+    },
+    {
+      "name": "lowercase host",
+      "host": "NEWS.Example.COM",
+      "uri": "/world/story",
+      "expected_uri": "/content/news.example.com/world/story.md"
+    },
+    {
+      "name": "directory index",
+      "host": "news.example.com",
+      "uri": "/world/story/",
+      "expected_uri": "/content/news.example.com/world/story/index.md"
+    },
+    {
+      "name": "existing extension",
+      "host": "news.example.com",
+      "uri": "/feeds/daily.xml",
+      "expected_uri": "/content/news.example.com/feeds/daily.xml.md"
+    },
+    {
+      "name": "punycode hostname",
+      "host": "xn--bcher-kva.example",
+      "uri": "/artikel",
+      "expected_uri": "/content/xn--bcher-kva.example/artikel.md"
+    },
+    {
+      "name": "decode percent-encoded unreserved character",
+      "host": "news.example.com",
+      "uri": "/caf%65",
+      "expected_uri": "/content/news.example.com/cafe.md"
+    },
+    {
+      "name": "decode encoded dot inside a filename",
+      "host": "news.example.com",
+      "uri": "/file%2Ehtml",
+      "expected_uri": "/content/news.example.com/file.html.md"
+    },
+    {
+      "name": "uppercase retained percent escape",
+      "host": "news.example.com",
+      "uri": "/a%20b",
+      "expected_uri": "/content/news.example.com/a%20b.md"
+    },
+    {
+      "name": "valid percent-encoded UTF-8",
+      "host": "news.example.com",
+      "uri": "/caf%C3%A9",
+      "expected_uri": "/content/news.example.com/caf%C3%A9.md"
+    },
+    {
+      "name": "sub-delimiters",
+      "host": "news.example.com",
+      "uri": "/markets/at&t;daily",
+      "expected_uri": "/content/news.example.com/markets/at&t;daily.md"
+    },
+    {
+      "name": "normalize default HTTPS port",
+      "host": "news.example.com:443",
+      "uri": "/story",
+      "expected_uri": "/content/news.example.com/story.md"
+    },
+    {
+      "name": "normalize trailing DNS dot",
+      "host": "news.example.com.",
+      "uri": "/story",
+      "expected_uri": "/content/news.example.com/story.md"
+    },
+    {
+      "name": "reject single-label host",
+      "host": "localhost",
+      "uri": "/story",
+      "expected_uri": null
+    },
+    {
+      "name": "reject host underscore",
+      "host": "bad_host.example.com",
+      "uri": "/story",
+      "expected_uri": null
+    },
+    {
+      "name": "reject IPv4 host",
+      "host": "192.0.2.10",
+      "uri": "/story",
+      "expected_uri": null
+    },
+    {
+      "name": "normalize repeated separator",
+      "host": "news.example.com",
+      "uri": "/world//story",
+      "expected_uri": "/content/news.example.com/world/story.md"
+    },
+    {
+      "name": "normalize literal traversal",
+      "host": "news.example.com",
+      "uri": "/world/../story",
+      "expected_uri": "/content/news.example.com/story.md"
+    },
+    {
+      "name": "reject encoded traversal",
+      "host": "news.example.com",
+      "uri": "/world/%2e%2e/story",
+      "expected_uri": null
+    },
+    {
+      "name": "reject encoded separator",
+      "host": "news.example.com",
+      "uri": "/world%2fstory",
+      "expected_uri": null
+    },
+    {
+      "name": "reject encoded backslash",
+      "host": "news.example.com",
+      "uri": "/world%5cstory",
+      "expected_uri": null
+    },
+    {
+      "name": "reject encoded percent",
+      "host": "news.example.com",
+      "uri": "/world%252fstory",
+      "expected_uri": null
+    },
+    {
+      "name": "reject malformed escape",
+      "host": "news.example.com",
+      "uri": "/story%2",
+      "expected_uri": null
+    },
+    {
+      "name": "reject invalid percent-encoded UTF-8",
+      "host": "news.example.com",
+      "uri": "/story%FF",
+      "expected_uri": null
+    },
+    {
+      "name": "reject percent-encoded control",
+      "host": "news.example.com",
+      "uri": "/story%00",
+      "expected_uri": null
+    },
+    {
+      "name": "reject query embedded in URI",
+      "host": "news.example.com",
+      "uri": "/story?url=other.example",
+      "expected_uri": null
+    },
+    {
+      "name": "reject raw non-ASCII",
+      "host": "news.example.com",
+      "uri": "/caf\u00e9",
+      "expected_uri": null
+    }
+  ]
+}

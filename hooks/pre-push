@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# Pre-push hook: run the ASH security scan before code leaves the machine.
+#
+# Why pre-PUSH not pre-COMMIT: a full ASH scan runs ~12 scanners and takes
+# minutes — too slow to run on every commit (builders would just --no-verify
+# around it). Pre-push runs it once per push, which is the right cadence.
+#
+# Install:  make install-hooks   (symlinks this into .git/hooks/pre-push)
+# Bypass:   git push --no-verify  (use sparingly; CI/Probe still gate on dev)
+set -euo pipefail
+
+repo_root="$(git rev-parse --show-toplevel)"
+cd "$repo_root"
+
+if ! command -v ash >/dev/null 2>&1; then
+  echo "pre-push: 'ash' (automated-security-helper) not found on PATH."
+  echo "          install it (pipx install automated-security-helper) or"
+  echo "          push with --no-verify and rely on Probe/CI on dev."
+  exit 1
+fi
+
+echo "pre-push: running ASH security scan (make security-scan)…"
+if ! make security-scan; then
+  echo
+  echo "pre-push: ASH reported HIGH/CRITICAL findings — push blocked."
+  echo "          Review .ash/ash_output/, fix the finding, OR if it is a"
+  echo "          verified false positive add a suppression to .ash/.ash.yaml"
+  echo "          (and .gitleaksignore for secret findings) with a reason."
+  echo "          Emergency bypass: git push --no-verify"
+  exit 1
+fi
+echo "pre-push: ASH scan clean."

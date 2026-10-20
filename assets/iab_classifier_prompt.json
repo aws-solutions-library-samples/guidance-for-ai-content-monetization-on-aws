@@ -1,0 +1,433 @@
+{
+  "metadata": {
+    "name": "iab_v3_1_text_classifier",
+    "version": "1.0.0",
+    "created": "2026-06-08",
+    "taxonomy_version": "IAB Content Taxonomy v3.1",
+    "taxonomy_category_count": 704,
+    "intended_use": "Classify text-only articles (CMS export: title + body + optional metadata) into IAB v3.1 categories for a publisher monetization platform.",
+    "model_recommendation": {
+      "default": "global.anthropic.claude-sonnet-4-6",
+      "cheap_alternative": "global.anthropic.claude-haiku-4-5-20251001-v1:0",
+      "nova_alternative": "amazon.nova-pro-v1:0",
+      "notes": "Pick Sonnet 4.6 for production accuracy; switch to Haiku 4.5 for high-volume / low-cost tiers (classification is well within Haiku's capabilities). Both support Bedrock prompt caching and tool use. The model_id should be configurable via environment variable (CLASSIFIER_MODEL_ID). These are cross-region inference profile IDs (global.) — the model must be enabled in the account/region."
+    },
+    "inference_config": {
+      "max_tokens": 1024,
+      "temperature": 0.1,
+      "top_p": 0.9,
+      "stop_sequences": []
+    },
+    "prompt_caching": {
+      "enabled": true,
+      "strategy": "Mark the system-prompt block containing the full taxonomy and rules with cache_control: {type: 'ephemeral'}. The variable user message (article content) is NOT cached. With Sonnet 4.6 on Bedrock, expect ~5 minute TTL on the cached block; cache hits cost ~10% of base input tokens."
+    }
+  },
+  "system_prompt": [
+    {
+      "type": "text",
+      "text": "You are an IAB Content Taxonomy v3.1 classifier for a publisher monetization platform. Your task is to read an article (title + body + optional metadata) and assign it to the most appropriate categories from the IAB v3.1 taxonomy provided below.\n\n## Classification Rules\n1. RETURN ONLY IDs THAT EXIST IN THE PROVIDED TAXONOMY. Do not invent, modify,    or hallucinate IDs or category names. The 'id' field of every category you    return MUST appear verbatim in the taxonomy block.\n2. Use the IDs and tier names exactly as provided. IDs may be numeric or    alphanumeric (e.g. 314, JLBCU7, 80DV8O).\n3. Return between 1 and 5 categories total: exactly 1 primary_category plus    0-4 secondary_categories.\n4. ALWAYS include at least the Tier 1 root category in the tier_path. Go deeper    (Tier 2, Tier 3, Tier 4) only when the article content clearly supports it.    Do not force depth - a confident Tier 2 match is better than a weak Tier 4    match.\n5. Confidence scores are floats in [0.0, 1.0]. Use >=0.85 for clear matches,    0.6-0.85 for likely matches, and <0.6 for tentative matches. If your    confidence for the primary is <0.5, still pick the best Tier 1 match and    note uncertainty in the rationale.\n6. Prefer specificity when the article is clearly on-topic. Prefer breadth    (higher tier) when the article spans multiple sub-topics or is generalist.\n7. Do not include duplicate or overlapping categories where one is an ancestor    of another in the same response. Pick the most specific node on each branch.\n8. For ambiguous lifestyle/general content, choose the closest single Tier 1    match and explain the ambiguity in the rationale.\n9. If the article matches a Sensitive Topics category (parent v9i3On), include    it as a secondary_category so downstream brand-safety filters can act on it.\n10. Always emit valid output via the 'classify_article' tool. Do not return     free-form text outside the tool call.\n\n## Tier Path Format\nThe tier_path field is the ordered list of tier names from Tier 1 down to the deepest tier you are confident about. Example: ['Automotive', 'Auto Type', 'Electric Vehicles'].\n\n## Taxonomy (IAB Content Taxonomy v3.1, 704 categories)\nFormat: each line is `ID|Tier1>Tier2>Tier3>Tier4` (trailing empty tiers omitted).\n<TAXONOMY>\n150|Attractions\n151|Attractions>Amusement and Theme Parks\n179|Attractions>Bars & Restaurants\n181|Attractions>Casinos & Gambling\n153|Attractions>Historic Site and Landmark Tours\n154|Attractions>Malls & Shopping Centers\n155|Attractions>Museums & Galleries\n158|Attractions>Nightclubs\n159|Attractions>Outdoor Activities\n160|Attractions>Parks & Nature\n177|Attractions>Theater Venues\n178|Attractions>Zoos & Aquariums\n1|Automotive\n2|Automotive>Auto Body Styles\n3|Automotive>Auto Body Styles>Commercial Trucks\n8|Automotive>Auto Body Styles>Convertible\n9|Automotive>Auto Body Styles>Coupe\n10|Automotive>Auto Body Styles>Crossover\n11|Automotive>Auto Body Styles>Hatchback\n12|Automotive>Auto Body Styles>Microcar\n13|Automotive>Auto Body Styles>Minivan\n14|Automotive>Auto Body Styles>Off-Road Vehicles\n15|Automotive>Auto Body Styles>Pickup Trucks\n4|Automotive>Auto Body Styles>Sedan\n5|Automotive>Auto Body Styles>Station Wagon\n6|Automotive>Auto Body Styles>SUV\n7|Automotive>Auto Body Styles>Van\n30|Automotive>Auto Buying and Selling\n31|Automotive>Auto Insurance\n32|Automotive>Auto Parts\n33|Automotive>Auto Recalls\n41|Automotive>Auto Rentals\n34|Automotive>Auto Repair\n35|Automotive>Auto Safety\n36|Automotive>Auto Shows\n37|Automotive>Auto Technology\n38|Automotive>Auto Technology>Auto Infotainment Technologies\n39|Automotive>Auto Technology>Auto Navigation Systems\n40|Automotive>Auto Technology>Auto Safety Technologies\n16|Automotive>Auto Type\n17|Automotive>Auto Type>Budget Cars\n18|Automotive>Auto Type>Certified Pre-Owned Cars\n19|Automotive>Auto Type>Classic Cars\n20|Automotive>Auto Type>Concept Cars\n21|Automotive>Auto Type>Driverless Cars\n22|Automotive>Auto Type>Green Vehicles\n23|Automotive>Auto Type>Luxury Cars\n24|Automotive>Auto Type>Performance Cars\n25|Automotive>Car Culture\n26|Automotive>Dash Cam Videos\n27|Automotive>Motorcycles\n28|Automotive>Road-Side Assistance\n29|Automotive>Scooters\n42|Books and Literature\n43|Books and Literature>Art and Photography\n46|Books and Literature>Comics and Graphic Novels\n48|Books and Literature>Fiction\n49|Books and Literature>Poetry\n52|Business and Finance\n53|Business and Finance>Business\n54|Business and Finance>Business>Business Accounting & Finance\n62|Business and Finance>Business>Business Administration\n63|Business and Finance>Business>Business Banking & Finance\n64|Business and Finance>Business>Business Banking & Finance>Angel Investment\n65|Business and Finance>Business>Business Banking & Finance>Bankruptcy\n66|Business and Finance>Business>Business Banking & Finance>Business Loans\n67|Business and Finance>Business>Business Banking & Finance>Debt Factoring & Invoice Discounting\n68|Business and Finance>Business>Business Banking & Finance>Mergers and Acquisitions\n69|Business and Finance>Business>Business Banking & Finance>Private Equity\n70|Business and Finance>Business>Business Banking & Finance>Sale & Lease Back\n71|Business and Finance>Business>Business Banking & Finance>Venture Capital\n72|Business and Finance>Business>Business I.T.\n73|Business and Finance>Business>Business Operations\n79|Business and Finance>Business>Business Utilities\n74|Business and Finance>Business>Consumer Issues\n75|Business and Finance>Business>Consumer Issues>Recalls\n76|Business and Finance>Business>Executive Leadership & Management\n77|Business and Finance>Business>Government Business\n78|Business and Finance>Business>Green Solutions\n55|Business and Finance>Business>Human Resources\n56|Business and Finance>Business>Large Business\n57|Business and Finance>Business>Logistics\n58|Business and Finance>Business>Marketing and Advertising\n59|Business and Finance>Business>Sales\n60|Business and Finance>Business>Small and Medium-sized Business\n61|Business and Finance>Business>Startups\n80|Business and Finance>Economy\n81|Business and Finance>Economy>Commodities\n82|Business and Finance>Economy>Currencies\n83|Business and Finance>Economy>Financial Crisis\n84|Business and Finance>Economy>Financial Reform\n85|Business and Finance>Economy>Financial Regulation\n86|Business and Finance>Economy>Gasoline Prices\n87|Business and Finance>Economy>Housing Market\n88|Business and Finance>Economy>Interest Rates\n89|Business and Finance>Economy>Job Market\n90|Business and Finance>Industries\n91|Business and Finance>Industries>Advertising Industry\n102|Business and Finance>Industries>Agriculture\n113|Business and Finance>Industries>Apparel Industry\n117|Business and Finance>Industries>Automotive Industry\n118|Business and Finance>Industries>Aviation Industry\n119|Business and Finance>Industries>Biotech and Biomedical Industry\n120|Business and Finance>Industries>Civil Engineering Industry\n121|Business and Finance>Industries>Construction Industry\n122|Business and Finance>Industries>Defense Industry\n92|Business and Finance>Industries>Education industry\n93|Business and Finance>Industries>Entertainment Industry\n94|Business and Finance>Industries>Environmental Services Industry\n95|Business and Finance>Industries>Financial Industry\n96|Business and Finance>Industries>Food Industry\n97|Business and Finance>Industries>Healthcare Industry\n98|Business and Finance>Industries>Hospitality Industry\n99|Business and Finance>Industries>Information Services Industry\n100|Business and Finance>Industries>Legal Services Industry\n101|Business and Finance>Industries>Logistics and Transportation Industry\n103|Business and Finance>Industries>Management Consulting Industry\n104|Business and Finance>Industries>Manufacturing Industry\n105|Business and Finance>Industries>Mechanical and Industrial Engineering Industry\n106|Business and Finance>Industries>Media Industry\n107|Business and Finance>Industries>Metals Industry\n108|Business and Finance>Industries>Non-Profit Organizations\n109|Business and Finance>Industries>Pharmaceutical Industry\n110|Business and Finance>Industries>Power and Energy Industry\n111|Business and Finance>Industries>Publishing Industry\n112|Business and Finance>Industries>Real Estate Industry\n114|Business and Finance>Industries>Retail Industry\n115|Business and Finance>Industries>Technology Industry\n116|Business and Finance>Industries>Telecommunications Industry\n123|Careers\n124|Careers>Apprenticeships\n125|Careers>Career Advice\n126|Careers>Career Planning\n127|Careers>Job Search\n128|Careers>Job Search>Job Fairs\n129|Careers>Job Search>Resume Writing and Advice\n130|Careers>Remote Working\n131|Careers>Vocational Training\n80DV8O|Communication\n380|Crime\n381|Disasters\n132|Education\n133|Education>Adult Education\n137|Education>College Education\n138|Education>College Education>College Planning\n139|Education>College Education>Postgraduate Education\n140|Education>College Education>Postgraduate Education>Professional School\n141|Education>College Education>Undergraduate Education\n142|Education>Early Childhood Education\n143|Education>Educational Assessment\n144|Education>Educational Assessment>Standardized Testing\n145|Education>Homeschooling\n146|Education>Homework and Study\n147|Education>Language Learning\n148|Education>Online Education\n149|Education>Primary Education\n134|Education>Private School\n135|Education>Secondary Education\n136|Education>Special Education\nJLBCU7|Entertainment\n324|Entertainment>Movies\n338|Entertainment>Music\n640|Entertainment>Television\n8VZQHL|Events\n162|Events>Awards Shows\n180|Events>Business Expos & Conferences\n185|Events>Fan Conventions\n186|Family and Relationships\n187|Family and Relationships>Bereavement\n188|Family and Relationships>Dating\n189|Family and Relationships>Divorce\n190|Family and Relationships>Eldercare\n191|Family and Relationships>Marriage and Civil Unions\n192|Family and Relationships>Parenting\n193|Family and Relationships>Parenting>Adoption and Fostering\n194|Family and Relationships>Parenting>Daycare and Pre-School\n195|Family and Relationships>Parenting>Internet Safety\n196|Family and Relationships>Parenting>Parenting Babies and Toddlers\n197|Family and Relationships>Parenting>Parenting Children Aged 4-11\n198|Family and Relationships>Parenting>Parenting Teens\n199|Family and Relationships>Parenting>Special Needs Kids\n200|Family and Relationships>Single Life\n201|Fine Art\n202|Fine Art>Costume\n203|Fine Art>Dance\n204|Fine Art>Design\n205|Fine Art>Digital Arts\n206|Fine Art>Fine Art Photography\n207|Fine Art>Modern Art\n208|Fine Art>Opera\n209|Fine Art>Theater\n210|Food & Drink\n211|Food & Drink>Alcoholic Beverages\n215|Food & Drink>Barbecues and Grilling\n216|Food & Drink>Cooking\n217|Food & Drink>Desserts and Baking\n218|Food & Drink>Dining Out\n219|Food & Drink>Food Allergies\n220|Food & Drink>Food Movements\n221|Food & Drink>Healthy Cooking and Eating\n222|Food & Drink>Non-Alcoholic Beverages\n212|Food & Drink>Vegan Diets\n213|Food & Drink>Vegetarian Diets\n214|Food & Drink>World Cuisines\nSPSHQ5|Genres\nVKIV56|Genres\n325|Genres>Action/Adventure\n641|Genres>Animation & Anime\n44|Genres>Biographies\n646|Genres>Comedy\n332|Genres>Documentary\n647|Genres>Drama\n648|Genres>Factual\n645|Genres>Family/Children\n335|Genres>Fantasy\nEZWB7V|Genres>History\n649|Genres>Holiday\n336|Genres>Horror\nTIFQA5|Genres>Lifestyle\n650|Genres>Music Video\n156|Genres>Musical\n331|Genres>Mystery\n651|Genres>Reality TV\n326|Genres>Romance\n652|Genres>Science Fiction\n642|Genres>Soap Opera\n643|Genres>Special Interest (Indie/Art House)\n370|Genres>Sports Radio\n371|Genres>Talk Radio\n376|Genres>Talk Radio>Public Radio\nA0AH3G|Genres>Talk Show\nKHPC5A|Genres>True Crime\nKHPC6A|Genres>Western\n51|Genres>Young Adult\n700|Genres>Thriller\n223|Healthy Living\n224|Healthy Living>Children's Health\n225|Healthy Living>Fitness and Exercise\n226|Healthy Living>Fitness and Exercise>Participant Sports\n227|Healthy Living>Fitness and Exercise>Running and Jogging\n228|Healthy Living>Men's Health\n229|Healthy Living>Nutrition\n230|Healthy Living>Senior Health\n231|Healthy Living>Weight Loss\n232|Healthy Living>Wellness\n233|Healthy Living>Wellness>Alternative Medicine\n234|Healthy Living>Wellness>Alternative Medicine>Herbs and Supplements\n235|Healthy Living>Wellness>Alternative Medicine>Holistic Health\n236|Healthy Living>Wellness>Physical Therapy\n237|Healthy Living>Wellness>Smoking Cessation\n238|Healthy Living>Women's Health\n239|Hobbies & Interests\n240|Hobbies & Interests>Antiquing and Antiques\n248|Hobbies & Interests>Arts and Crafts\n249|Hobbies & Interests>Arts and Crafts>Beadwork\n250|Hobbies & Interests>Arts and Crafts>Candle and Soap Making\n251|Hobbies & Interests>Arts and Crafts>Drawing and Sketching\n252|Hobbies & Interests>Arts and Crafts>Jewelry Making\n253|Hobbies & Interests>Arts and Crafts>Needlework\n254|Hobbies & Interests>Arts and Crafts>Painting\n255|Hobbies & Interests>Arts and Crafts>Photography\n256|Hobbies & Interests>Arts and Crafts>Scrapbooking\n257|Hobbies & Interests>Arts and Crafts>Woodworking\n258|Hobbies & Interests>Beekeeping\n259|Hobbies & Interests>Birdwatching\n260|Hobbies & Interests>Cigars\n261|Hobbies & Interests>Collecting\n262|Hobbies & Interests>Collecting>Comic Books\n263|Hobbies & Interests>Collecting>Stamps and Coins\n264|Hobbies & Interests>Content Production\n265|Hobbies & Interests>Content Production>Audio Production\n266|Hobbies & Interests>Content Production>Freelance Writing\n267|Hobbies & Interests>Content Production>Screenwriting\n268|Hobbies & Interests>Content Production>Video Production\n269|Hobbies & Interests>Games and Puzzles\n270|Hobbies & Interests>Games and Puzzles>Board Games and Puzzles\n271|Hobbies & Interests>Games and Puzzles>Card Games\n272|Hobbies & Interests>Games and Puzzles>Roleplaying Games\n273|Hobbies & Interests>Genealogy and Ancestry\n241|Hobbies & Interests>Magic and Illusion\n242|Hobbies & Interests>Model Toys\n243|Hobbies & Interests>Musical Instruments\n244|Hobbies & Interests>Paranormal Phenomena\n245|Hobbies & Interests>Radio Control\n246|Hobbies & Interests>Sci-fi and Fantasy\n247|Hobbies & Interests>Workshops and Classes\n1KXCLD|Holidays\n157|Holidays>National & Civic Holidays\n274|Home & Garden\n275|Home & Garden>Gardening\n278|Home & Garden>Home Appliances\n279|Home & Garden>Home Entertaining\n280|Home & Garden>Home Improvement\n281|Home & Garden>Home Security\n282|Home & Garden>Indoor Environmental Quality\n283|Home & Garden>Interior Decorating\n284|Home & Garden>Landscaping\n285|Home & Garden>Outdoor Decorating\n276|Home & Garden>Remodeling & Construction\n277|Home & Garden>Smart Home\n383|Law\nWQC6HR|Maps & Navigation\n286|Medical Health\n323|Medical Health>Cosmetic Medical Services\n287|Medical Health>Diseases and Conditions\n288|Medical Health>Diseases and Conditions>Allergies\n306|Medical Health>Diseases and Conditions>Blood Disorders\n312|Medical Health>Diseases and Conditions>Bone and Joint Conditions\n313|Medical Health>Diseases and Conditions>Brain and Nervous System Disorders\n314|Medical Health>Diseases and Conditions>Cancer\n315|Medical Health>Diseases and Conditions>Cold and Flu\n316|Medical Health>Diseases and Conditions>Dental Health\n317|Medical Health>Diseases and Conditions>Diabetes\n318|Medical Health>Diseases and Conditions>Digestive Disorders\n289|Medical Health>Diseases and Conditions>Ear, Nose and Throat Conditions\n290|Medical Health>Diseases and Conditions>Endocrine and Metabolic Diseases\n291|Medical Health>Diseases and Conditions>Endocrine and Metabolic Diseases>Hormonal Disorders\n292|Medical Health>Diseases and Conditions>Endocrine and Metabolic Diseases>Menopause\n293|Medical Health>Diseases and Conditions>Endocrine and Metabolic Diseases>Thyroid Disorders\n294|Medical Health>Diseases and Conditions>Eye and Vision Conditions\n295|Medical Health>Diseases and Conditions>Foot Health\n296|Medical Health>Diseases and Conditions>Heart and Cardiovascular Diseases\n297|Medical Health>Diseases and Conditions>Infectious Diseases\n298|Medical Health>Diseases and Conditions>Injuries\n299|Medical Health>Diseases and Conditions>Injuries>First Aid\n300|Medical Health>Diseases and Conditions>Lung and Respiratory Health\n301|Medical Health>Diseases and Conditions>Mental Health\n302|Medical Health>Diseases and Conditions>Reproductive Health\n303|Medical Health>Diseases and Conditions>Reproductive Health>Birth Control\n304|Medical Health>Diseases and Conditions>Reproductive Health>Infertility\n305|Medical Health>Diseases and Conditions>Reproductive Health>Pregnancy\n307|Medical Health>Diseases and Conditions>Sexual Health\n308|Medical Health>Diseases and Conditions>Sexual Health>Sexual Conditions\n309|Medical Health>Diseases and Conditions>Skin and Dermatology\n310|Medical Health>Diseases and Conditions>Sleep Disorders\n311|Medical Health>Diseases and Conditions>Substance Abuse\n319|Medical Health>Medical Tests\n320|Medical Health>Pharmaceutical Drugs\n321|Medical Health>Surgery\n322|Medical Health>Vaccines\n342|Entertainment>Adult Album Alternative\n339|Entertainment>Adult Contemporary Music\n340|Entertainment>Adult Contemporary Music>Soft AC Music\n341|Entertainment>Adult Contemporary Music>Urban AC Music\n343|Entertainment>Alternative Music\n360|Entertainment>Blues\n344|Entertainment>Children's Music\n345|Entertainment>Classic Hits\n346|Entertainment>Classical Music\n347|Entertainment>College Radio\n348|Entertainment>Comedy (Music and Audio)\n349|Entertainment>Contemporary Hits/Pop/Top 40\n350|Entertainment>Country Music\n351|Entertainment>Dance and Electronic Music\n354|Entertainment>Gospel Music\n355|Entertainment>Hip Hop Music\n356|Entertainment>Inspirational/New Age Music\n357|Entertainment>Jazz\n358|Entertainment>Oldies/Adult Standards\n362|Entertainment>R&B/Soul/Funk\n359|Entertainment>Reggae\n361|Entertainment>Religious (Music and Audio)\n363|Entertainment>Rock Music\n364|Entertainment>Rock Music>Album-oriented Rock\n365|Entertainment>Rock Music>Alternative Rock\n366|Entertainment>Rock Music>Classic Rock\n367|Entertainment>Rock Music>Hard Rock\n368|Entertainment>Rock Music>Soft Rock\n353|Entertainment>Songwriters/Folk\n369|Entertainment>Soundtracks, TV and Showtunes\n352|Entertainment>World/International Music\n377|Entertainment>Urban Contemporary Music\n378|Entertainment>Variety (Music and Audio)\n163|Personal Celebrations & Life Events\n164|Personal Celebrations & Life Events>Anniversary\n166|Personal Celebrations & Life Events>Baby Shower\n167|Personal Celebrations & Life Events>Bachelor Party\n168|Personal Celebrations & Life Events>Bachelorette Party\n169|Personal Celebrations & Life Events>Birth\n170|Personal Celebrations & Life Events>Birthday\n171|Personal Celebrations & Life Events>Funeral\n172|Personal Celebrations & Life Events>Graduation\n173|Personal Celebrations & Life Events>Prom\n165|Personal Celebrations & Life Events>Wedding\n391|Personal Finance\n392|Personal Finance>Consumer Banking\n393|Personal Finance>Financial Assistance\n394|Personal Finance>Financial Assistance>Government Support and Welfare\n395|Personal Finance>Financial Assistance>Student Financial Aid\n396|Personal Finance>Financial Planning\n397|Personal Finance>Frugal Living\n417|Personal Finance>Home Utilities\n418|Personal Finance>Home Utilities>Gas and Electric\n419|Personal Finance>Home Utilities>Internet Service Providers\n420|Personal Finance>Home Utilities>Phone Services\n421|Personal Finance>Home Utilities>Water Services\n398|Personal Finance>Insurance\n399|Personal Finance>Insurance>Health Insurance\n400|Personal Finance>Insurance>Home Insurance\n401|Personal Finance>Insurance>Life Insurance\n402|Personal Finance>Insurance>Motor Insurance\n403|Personal Finance>Insurance>Pet Insurance\n404|Personal Finance>Insurance>Travel Insurance\n405|Personal Finance>Personal Debt\n406|Personal Finance>Personal Debt>Credit Cards\n407|Personal Finance>Personal Debt>Home Financing\n408|Personal Finance>Personal Debt>Personal Loans\n409|Personal Finance>Personal Debt>Student Loans\n410|Personal Finance>Personal Investing\n411|Personal Finance>Personal Investing>Hedge Funds\n412|Personal Finance>Personal Investing>Mutual Funds\n413|Personal Finance>Personal Investing>Options\n414|Personal Finance>Personal Investing>Stocks and Bonds\n415|Personal Finance>Personal Taxes\n416|Personal Finance>Retirement Planning\n422|Pets\n423|Pets>Birds\n424|Pets>Cats\n425|Pets>Dogs\n426|Pets>Fish and Aquariums\n427|Pets>Large Animals\n428|Pets>Pet Adoptions\n431|Pets>Pet Supplies\n429|Pets>Reptiles\n430|Pets>Veterinary Medicine\n386|Politics\n8YPBBL|Politics>Civic affairs\n387|Politics>Elections\n388|Politics>Political Issues & policy\n432|Pop Culture\n433|Pop Culture>Celebrity Deaths\n434|Pop Culture>Celebrity Families\n435|Pop Culture>Celebrity Homes\n436|Pop Culture>Celebrity Pregnancy\n437|Pop Culture>Celebrity Relationships\n438|Pop Culture>Celebrity Scandal\n439|Pop Culture>Celebrity Style\n440|Pop Culture>Humor and Satire\nW3CW2J|Productivity\n441|Real Estate\n442|Real Estate>Apartments\n445|Real Estate>Developmental Sites\n446|Real Estate>Hotel Properties\n447|Real Estate>Houses\n448|Real Estate>Industrial Property\n449|Real Estate>Land and Farms\n450|Real Estate>Office Property\n451|Real Estate>Real Estate Buying and Selling\n452|Real Estate>Real Estate Renting and Leasing\n443|Real Estate>Retail Property\n444|Real Estate>Vacation Properties\n453|Religion & Spirituality\n454|Religion & Spirituality>Agnosticism\n456|Religion & Spirituality>Astrology\n457|Religion & Spirituality>Atheism\n458|Religion & Spirituality>Buddhism\n459|Religion & Spirituality>Christianity\n460|Religion & Spirituality>Hinduism\n461|Religion & Spirituality>Islam\n462|Religion & Spirituality>Judaism\n463|Religion & Spirituality>Sikhism\n455|Religion & Spirituality>Spirituality\n464|Science\n465|Science>Biological Sciences\n466|Science>Chemistry\n467|Science>Environment\n468|Science>Genetics\n469|Science>Geography\n470|Science>Geology\n471|Science>Physics\n472|Science>Space and Astronomy\n390|Science>Weather\nv9i3On|Sensitive Topics\nRm3SiT|Sensitive Topics>Adult & Explicit Sexual Content\navbNf2|Sensitive Topics>Arms & Ammunition\nXtODT3|Sensitive Topics>Crime & Harmful Acts to Individuals, Society & Human Right Violations\nI4GWl6|Sensitive Topics>Death, Injury, or Military Conflict\nZ7rJBM|Sensitive Topics>Debated Sensitive Social Issues\nHxqYV1|Sensitive Topics>Hate Speech and Acts of Aggression\npg0WhF|Sensitive Topics>Illegal Drugs, Tobacco, eCigarettes, Vaping, Alcohol\nj9PaO9|Sensitive Topics>Obscenity and Profanity\nmm3UXx|Sensitive Topics>Online Piracy\n6i4dB6|Sensitive Topics>Spam or Harmful Content\n8FD8nI|Sensitive Topics>Terrorism\n473|Shopping\n482|Shopping>Children's Games and Toys\n474|Shopping>Coupons and Discounts\n475|Shopping>Flower Shopping\n476|Shopping>Gifts and Greetings Cards\n477|Shopping>Grocery Shopping\n478|Shopping>Holiday Shopping\n479|Shopping>Household Supplies\n480|Shopping>Lotteries and Scratchcards\n161|Shopping>Party Supplies and Decorations\n481|Shopping>Sales and Promotions\n483|Sports\n484|Sports>American Football\n507|Sports>Australian Rules Football\n518|Sports>Auto Racing\n519|Sports>Auto Racing>Motorcycle Sports\n534|Sports>Badminton\n545|Sports>Baseball\n547|Sports>Basketball\n548|Sports>Beach Volleyball\n549|Sports>Bodybuilding\n550|Sports>Bowling\n485|Sports>Boxing\n486|Sports>Cheerleading\n487|Sports>College Sports\n490|Sports>College Sports>College Baseball\n489|Sports>College Sports>College Basketball\n488|Sports>College Sports>College Football\n491|Sports>Cricket\n492|Sports>Cycling\n493|Sports>Darts\n494|Sports>Disabled Sports\n495|Sports>Diving\n496|Sports>Equine Sports\n497|Sports>Equine Sports>Horse Racing\n498|Sports>Extreme Sports\n499|Sports>Extreme Sports>Canoeing and Kayaking\n500|Sports>Extreme Sports>Climbing\n501|Sports>Extreme Sports>Paintball\n502|Sports>Extreme Sports>Scuba Diving\n503|Sports>Extreme Sports>Skateboarding\n504|Sports>Extreme Sports>Snowboarding\n505|Sports>Extreme Sports>Surfing and Bodyboarding\n506|Sports>Extreme Sports>Waterskiing and Wakeboarding\n508|Sports>Fantasy Sports\n509|Sports>Field Hockey\n510|Sports>Figure Skating\n511|Sports>Fishing Sports\n512|Sports>Golf\n513|Sports>Gymnastics\n514|Sports>Hunting and Shooting\n515|Sports>Ice Hockey\n516|Sports>Inline Skating\n517|Sports>Lacrosse\n520|Sports>Martial Arts\n521|Sports>Olympic Sports\n522|Sports>Olympic Sports>Summer Olympic Sports\n523|Sports>Olympic Sports>Winter Olympic Sports\n524|Sports>Poker and Professional Gambling\n525|Sports>Rodeo\n526|Sports>Rowing\n527|Sports>Rugby\n528|Sports>Rugby>Rugby League\n529|Sports>Rugby>Rugby Union\n530|Sports>Sailing\n531|Sports>Skiing\n532|Sports>Snooker/Pool/Billiards\n533|Sports>Soccer\n535|Sports>Softball\n551|Sports>Sports Equipment\n536|Sports>Squash\n537|Sports>Swimming\n538|Sports>Table Tennis\n539|Sports>Tennis\n540|Sports>Track and Field\n541|Sports>Volleyball\n542|Sports>Walking\n543|Sports>Water Polo\n544|Sports>Weightlifting\n546|Sports>Wrestling\n552|Style & Fashion\n553|Style & Fashion>Beauty\n554|Style & Fashion>Beauty>Hair Care\n555|Style & Fashion>Beauty>Makeup and Accessories\n556|Style & Fashion>Beauty>Nail Care\n557|Style & Fashion>Beauty>Natural and Organic Beauty\n558|Style & Fashion>Beauty>Perfume and Fragrance\n559|Style & Fashion>Beauty>Skin Care\n574|Style & Fashion>Body Art\n575|Style & Fashion>Children's Clothing\n576|Style & Fashion>Designer Clothing\n577|Style & Fashion>Fashion Trends\n578|Style & Fashion>High Fashion\n579|Style & Fashion>Men's Fashion\n580|Style & Fashion>Men's Fashion>Men's Accessories\n581|Style & Fashion>Men's Fashion>Men's Accessories>Men's Jewelry and Watches\n582|Style & Fashion>Men's Fashion>Men's Clothing\n583|Style & Fashion>Men's Fashion>Men's Clothing>Men's Business Wear\n584|Style & Fashion>Men's Fashion>Men's Clothing>Men's Casual Wear\n585|Style & Fashion>Men's Fashion>Men's Clothing>Men's Formal Wear\n586|Style & Fashion>Men's Fashion>Men's Clothing>Men's Outerwear\n587|Style & Fashion>Men's Fashion>Men's Clothing>Men's Sportswear\n588|Style & Fashion>Men's Fashion>Men's Clothing>Men's Underwear and Sleepwear\n589|Style & Fashion>Men's Fashion>Men's Shoes and Footwear\n590|Style & Fashion>Personal Care\n591|Style & Fashion>Personal Care>Bath and Shower\n592|Style & Fashion>Personal Care>Deodorant and Antiperspirant\n593|Style & Fashion>Personal Care>Oral care\n594|Style & Fashion>Personal Care>Shaving\n595|Style & Fashion>Street Style\n560|Style & Fashion>Women's Fashion\n561|Style & Fashion>Women's Fashion>Women's Accessories\n562|Style & Fashion>Women's Fashion>Women's Accessories>Women's Glasses\n563|Style & Fashion>Women's Fashion>Women's Accessories>Women's Handbags and Wallets\n564|Style & Fashion>Women's Fashion>Women's Accessories>Women's Hats and Scarves\n565|Style & Fashion>Women's Fashion>Women's Accessories>Women's Jewelry and Watches\n566|Style & Fashion>Women's Fashion>Women's Clothing\n567|Style & Fashion>Women's Fashion>Women's Clothing>Women's Business Wear\n568|Style & Fashion>Women's Fashion>Women's Clothing>Women's Casual Wear\n569|Style & Fashion>Women's Fashion>Women's Clothing>Women's Formal Wear\n570|Style & Fashion>Women's Fashion>Women's Clothing>Women's Intimates and Sleepwear\n571|Style & Fashion>Women's Fashion>Women's Clothing>Women's Outerwear\n572|Style & Fashion>Women's Fashion>Women's Clothing>Women's Sportswear\n573|Style & Fashion>Women's Fashion>Women's Shoes and Footwear\n596|Technology & Computing\n597|Technology & Computing>Artificial Intelligence\n598|Technology & Computing>Augmented Reality\n599|Technology & Computing>Computing\n600|Technology & Computing>Computing>Computer Networking\n601|Technology & Computing>Computing>Computer Peripherals\n602|Technology & Computing>Computing>Computer Software and Applications\n603|Technology & Computing>Computing>Computer Software and Applications>3-D Graphics\n608|Technology & Computing>Computing>Computer Software and Applications>Antivirus Software\n609|Technology & Computing>Computing>Computer Software and Applications>Browsers\n610|Technology & Computing>Computing>Computer Software and Applications>Computer Animation\n611|Technology & Computing>Computing>Computer Software and Applications>Databases\n612|Technology & Computing>Computing>Computer Software and Applications>Desktop Publishing\n613|Technology & Computing>Computing>Computer Software and Applications>Digital Audio\n614|Technology & Computing>Computing>Computer Software and Applications>Graphics Software\n615|Technology & Computing>Computing>Computer Software and Applications>Operating Systems\n604|Technology & Computing>Computing>Computer Software and Applications>Photo Editing Software\n605|Technology & Computing>Computing>Computer Software and Applications>Shareware and Freeware\n606|Technology & Computing>Computing>Computer Software and Applications>Video Software\n607|Technology & Computing>Computing>Computer Software and Applications>Web Conferencing\n616|Technology & Computing>Computing>Data Storage and Warehousing\n617|Technology & Computing>Computing>Desktops\n618|Technology & Computing>Computing>Information and Network Security\n619|Technology & Computing>Computing>Internet\n620|Technology & Computing>Computing>Internet>Cloud Computing\n623|Technology & Computing>Computing>Internet>Email\n624|Technology & Computing>Computing>Internet>Internet for Beginners\n625|Technology & Computing>Computing>Internet>Internet of Things\n626|Technology & Computing>Computing>Internet>IT and Internet Support\n627|Technology & Computing>Computing>Internet>Search\n628|Technology & Computing>Computing>Internet>Social Networking\n629|Technology & Computing>Computing>Internet>Web Design and HTML\n621|Technology & Computing>Computing>Internet>Web Development\n622|Technology & Computing>Computing>Internet>Web Hosting\n630|Technology & Computing>Computing>Laptops\n631|Technology & Computing>Computing>Programming Languages\n632|Technology & Computing>Consumer Electronics\n633|Technology & Computing>Consumer Electronics>Cameras and Camcorders\n634|Technology & Computing>Consumer Electronics>Home Entertainment Systems\n635|Technology & Computing>Consumer Electronics>Smartphones\n636|Technology & Computing>Consumer Electronics>Tablets and E-readers\n637|Technology & Computing>Consumer Electronics>Wearable Technology\n638|Technology & Computing>Robotics\n639|Technology & Computing>Virtual Reality\n653|Travel\n654|Travel>Travel Accessories\n655|Travel>Travel Locations\n656|Travel>Travel Locations>Africa Travel\n657|Travel>Travel Locations>Asia Travel\n658|Travel>Travel Locations>Australia and Oceania Travel\n659|Travel>Travel Locations>Europe Travel\n660|Travel>Travel Locations>North America Travel\n661|Travel>Travel Locations>Polar Travel\n662|Travel>Travel Locations>South America Travel\n663|Travel>Travel Preparation and Advice\n664|Travel>Travel Type\n665|Travel>Travel Type>Adventure Travel\n672|Travel>Travel Type>Air Travel\n673|Travel>Travel Type>Beach Travel\n674|Travel>Travel Type>Bed & Breakfasts\n675|Travel>Travel Type>Budget Travel\n676|Travel>Travel Type>Business Travel\n677|Travel>Travel Type>Camping\n678|Travel>Travel Type>Cruises\n679|Travel>Travel Type>Day Trips\n666|Travel>Travel Type>Family Travel\n667|Travel>Travel Type>Honeymoons and Getaways\n668|Travel>Travel Type>Hotels and Motels\n669|Travel>Travel Type>Rail Travel\n670|Travel>Travel Type>Road Trips\n671|Travel>Travel Type>Spas\n680|Video Gaming\n681|Video Gaming>Console Games\n682|Video Gaming>eSports\n683|Video Gaming>Mobile Games\n684|Video Gaming>PC Games\n685|Video Gaming>Video Game Genres\n686|Video Gaming>Video Game Genres>Action Video Games\n691|Video Gaming>Video Game Genres>Action-Adventure Video Games\nMQ2XML|Video Gaming>Video Game Genres>Adult Video Games\n692|Video Gaming>Video Game Genres>Adventure Video Games\nZJG29S|Video Gaming>Video Game Genres>Casino and Gambling Video Games\n693|Video Gaming>Video Game Genres>Casual Games\n694|Video Gaming>Video Game Genres>Educational Video Games\n695|Video Gaming>Video Game Genres>Exercise and Fitness Video Games\nVWGKS7|Video Gaming>Video Game Genres>Family Video Games\nII436J|Video Gaming>Video Game Genres>Horror Video Games\n696|Video Gaming>Video Game Genres>MMOs\n697|Video Gaming>Video Game Genres>Music and Party Video Games\n698|Video Gaming>Video Game Genres>Puzzle Video Games\nVK7KD0|Video Gaming>Video Game Genres>Racing Video Games\n687|Video Gaming>Video Game Genres>Role-Playing Video Games\n688|Video Gaming>Video Game Genres>Simulation Video Games\n689|Video Gaming>Video Game Genres>Sports Video Games\n690|Video Gaming>Video Game Genres>Strategy Video Games\n389|War and Conflicts\n</TAXONOMY>\n",
+      "cache_control": {
+        "type": "ephemeral"
+      }
+    }
+  ],
+  "tool_specification": {
+    "tool_choice": {
+      "type": "tool",
+      "name": "classify_article"
+    },
+    "tools": [
+      {
+        "name": "classify_article",
+        "description": "Submit the IAB v3.1 classification result for the article. Must be called exactly once per request. All category IDs MUST exist in the provided taxonomy.",
+        "input_schema": {
+          "type": "object",
+          "properties": {
+            "primary_category": {
+              "type": "object",
+              "description": "The single best-matching IAB category for this article.",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "IAB v3.1 unique ID, exactly as it appears in the taxonomy."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The leaf-tier name of the category."
+                },
+                "tier_path": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "maxItems": 4,
+                  "description": "Ordered tier names from Tier 1 down to the deepest confident tier."
+                },
+                "confidence": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "maximum": 1.0
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "tier_path",
+                "confidence"
+              ]
+            },
+            "secondary_categories": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 4,
+              "description": "0-4 additional matching categories, ordered by descending confidence.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "tier_path": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "minItems": 1,
+                    "maxItems": 4
+                  },
+                  "confidence": {
+                    "type": "number",
+                    "minimum": 0.0,
+                    "maximum": 1.0
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "tier_path",
+                  "confidence"
+                ]
+              }
+            },
+            "rationale": {
+              "type": "string",
+              "description": "1-2 sentence explanation of why these categories were chosen.",
+              "maxLength": 600
+            }
+          },
+          "required": [
+            "primary_category",
+            "secondary_categories",
+            "rationale"
+          ]
+        }
+      }
+    ]
+  },
+  "output_schema": {
+    "type": "object",
+    "properties": {
+      "primary_category": {
+        "type": "object",
+        "description": "The single best-matching IAB category for this article.",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "IAB v3.1 unique ID, exactly as it appears in the taxonomy."
+          },
+          "name": {
+            "type": "string",
+            "description": "The leaf-tier name of the category."
+          },
+          "tier_path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 4,
+            "description": "Ordered tier names from Tier 1 down to the deepest confident tier."
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "tier_path",
+          "confidence"
+        ]
+      },
+      "secondary_categories": {
+        "type": "array",
+        "minItems": 0,
+        "maxItems": 4,
+        "description": "0-4 additional matching categories, ordered by descending confidence.",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "tier_path": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "maxItems": 4
+            },
+            "confidence": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "tier_path",
+            "confidence"
+          ]
+        }
+      },
+      "rationale": {
+        "type": "string",
+        "description": "1-2 sentence explanation of why these categories were chosen.",
+        "maxLength": 600
+      }
+    },
+    "required": [
+      "primary_category",
+      "secondary_categories",
+      "rationale"
+    ]
+  },
+  "user_message_template": {
+    "template": "Classify the following article against the IAB v3.1 taxonomy. Call the 'classify_article' tool exactly once with the result.\n\n<article>\n  <title>{{title}}</title>\n  <author>{{author}}</author>\n  <publication_date>{{publication_date}}</publication_date>\n  <cms_tags>{{cms_tags}}</cms_tags>\n  <content_text>\n{{content_text}}\n  </content_text>\n</article>",
+    "required_fields": [
+      "title",
+      "content_text"
+    ],
+    "optional_fields": [
+      "author",
+      "publication_date",
+      "cms_tags"
+    ],
+    "field_notes": {
+      "title": "Article headline as published.",
+      "author": "Byline (string). If unknown, pass empty string.",
+      "publication_date": "ISO-8601 date (YYYY-MM-DD). Optional context for trend/seasonality cues.",
+      "cms_tags": "JSON array of strings provided by the publisher's CMS. Useful hints, not authoritative.",
+      "content_text": "Plain-text body. Strip HTML before sending. Truncate to ~12,000 tokens (~48,000 chars) for very long articles; the first ~3,000 tokens are the most signal-rich for classification."
+    }
+  },
+  "examples": [
+    {
+      "name": "healthcare_ai_breakthrough",
+      "description": "Article about an AI model that detects pancreatic cancer earlier than radiologists.",
+      "user_input": {
+        "title": "New AI Model Detects Pancreatic Cancer 18 Months Earlier Than Radiologists",
+        "author": "Jane Park",
+        "publication_date": "2025-09-12",
+        "cms_tags": [
+          "health",
+          "ai",
+          "oncology",
+          "research"
+        ],
+        "content_text": "A team at Stanford Medicine has unveiled a deep-learning model that spots early-stage pancreatic adenocarcinoma on routine CT scans an average of 18 months before human radiologists flag the same images. Trained on 350,000 abdominal CTs, the model achieved an AUC of 0.94 on a held-out test set and is now entering a multi-site clinical trial. Pancreatic cancer has a five-year survival rate below 12%, and most cases are diagnosed at stage III or IV. The researchers say earlier detection could be transformative."
+      },
+      "expected_tool_use": {
+        "name": "classify_article",
+        "input": {
+          "primary_category": {
+            "id": "314",
+            "name": "Cancer",
+            "tier_path": [
+              "Medical Health",
+              "Diseases and Conditions",
+              "Cancer"
+            ],
+            "confidence": 0.95
+          },
+          "secondary_categories": [
+            {
+              "id": "597",
+              "name": "Artificial Intelligence",
+              "tier_path": [
+                "Technology & Computing",
+                "Artificial Intelligence"
+              ],
+              "confidence": 0.92
+            },
+            {
+              "id": "319",
+              "name": "Medical Tests",
+              "tier_path": [
+                "Medical Health",
+                "Medical Tests"
+              ],
+              "confidence": 0.78
+            },
+            {
+              "id": "119",
+              "name": "Biotech and Biomedical Industry",
+              "tier_path": [
+                "Business and Finance",
+                "Industries",
+                "Biotech and Biomedical Industry"
+              ],
+              "confidence": 0.55
+            }
+          ],
+          "rationale": "The article centers on a cancer-detection breakthrough (primary: Cancer) achieved through an AI model on medical imaging, so AI and Medical Tests are strong secondaries; the biomedical-industry angle is weaker but relevant."
+        }
+      }
+    },
+    {
+      "name": "tesla_quarterly_earnings",
+      "description": "Tesla Q3 earnings beat with EV delivery guidance.",
+      "user_input": {
+        "title": "Tesla Beats Q3 Earnings on Cybertruck Demand, Lifts FY Delivery Guidance",
+        "author": "Mark Reilly",
+        "publication_date": "2025-10-23",
+        "cms_tags": [
+          "tesla",
+          "earnings",
+          "ev",
+          "stocks"
+        ],
+        "content_text": "Tesla reported third-quarter earnings of $1.12 per share on revenue of $26.1B, beating analyst consensus of $0.98 and $25.4B. The company raised full-year delivery guidance to 2.05 million vehicles, citing stronger-than-expected Cybertruck production ramp and steady Model Y demand in China. Shares rose 7% in after-hours trading. CFO Vaibhav Taneja said operating margin expanded to 11.4% as raw-material costs eased."
+      },
+      "expected_tool_use": {
+        "name": "classify_article",
+        "input": {
+          "primary_category": {
+            "id": "117",
+            "name": "Automotive Industry",
+            "tier_path": [
+              "Business and Finance",
+              "Industries",
+              "Automotive Industry"
+            ],
+            "confidence": 0.93
+          },
+          "secondary_categories": [
+            {
+              "id": "22",
+              "name": "Green Vehicles",
+              "tier_path": [
+                "Automotive",
+                "Auto Type",
+                "Green Vehicles"
+              ],
+              "confidence": 0.86
+            },
+            {
+              "id": "414",
+              "name": "Stocks and Bonds",
+              "tier_path": [
+                "Personal Finance",
+                "Personal Investing",
+                "Stocks and Bonds"
+              ],
+              "confidence": 0.7
+            },
+            {
+              "id": "53",
+              "name": "Business",
+              "tier_path": [
+                "Business and Finance",
+                "Business"
+              ],
+              "confidence": 0.65
+            }
+          ],
+          "rationale": "The article is a corporate earnings story for an automaker, so Automotive Industry is primary; the EV product mix and stock reaction make Green Vehicles and Stocks and Bonds relevant secondaries."
+        }
+      }
+    },
+    {
+      "name": "ambiguous_lifestyle_blog",
+      "description": "A vague lifestyle post that mixes wellness, travel and reflection.",
+      "user_input": {
+        "title": "Slow Mornings: How a Month in Lisbon Reset My Burnout",
+        "author": "Priya Anand",
+        "publication_date": "2025-08-04",
+        "cms_tags": [
+          "lifestyle",
+          "wellness",
+          "travel",
+          "personal"
+        ],
+        "content_text": "I left San Francisco in June with my laptop, two suitcases, and a low-grade dread I had been carrying for two years. In Lisbon I stopped scheduling my mornings. I drank espresso on the same blue-tiled stoop. I walked along the Tagus until the heat broke. I am not going to tell you that one trip cured my burnout, because it didn't. But it loosened something. This is a piece about pace, about cities, about the very small kindnesses of strangers who make your bread."
+      },
+      "expected_tool_use": {
+        "name": "classify_article",
+        "input": {
+          "primary_category": {
+            "id": "232",
+            "name": "Wellness",
+            "tier_path": [
+              "Healthy Living",
+              "Wellness"
+            ],
+            "confidence": 0.62
+          },
+          "secondary_categories": [
+            {
+              "id": "659",
+              "name": "Europe Travel",
+              "tier_path": [
+                "Travel",
+                "Travel Locations",
+                "Europe Travel"
+              ],
+              "confidence": 0.6
+            },
+            {
+              "id": "TIFQA5",
+              "name": "Lifestyle",
+              "tier_path": [
+                "Genres",
+                "Lifestyle"
+              ],
+              "confidence": 0.55
+            }
+          ],
+          "rationale": "Ambiguous personal-essay piece blending burnout recovery (Wellness, primary at moderate confidence) with a travel diary in Lisbon (Europe Travel) and a generally reflective lifestyle voice; no single category dominates."
+        }
+      }
+    }
+  ],
+  "usage_notes": {
+    "bedrock_converse_integration": "Wire into Bedrock Converse API as follows: pass `system_prompt` as the `system` parameter (a list of content blocks, each with `cachePoint` set via the `cachePoint: {type: 'default'}` field on Bedrock; this is the Bedrock-native equivalent of Anthropic's `cache_control: {type: 'ephemeral'}`). Pass `tool_specification.tools` as `toolConfig.tools` and `tool_specification.tool_choice` as `toolConfig.toolChoice`. Render the `user_message_template` with the article fields and pass it as the user turn. Apply `inference_config` to `inferenceConfig`.",
+    "anthropic_messages_integration": "Pass `system_prompt` directly as the `system` array (Anthropic Messages API supports `cache_control: {type: 'ephemeral'}` on system blocks natively). Pass `tool_specification.tools` as `tools` and `tool_specification.tool_choice` as `tool_choice`.",
+    "expected_token_cost": "System-prompt (taxonomy + rules) is ~12k-14k input tokens. With prompt caching the cache-read cost per request drops to ~10% of base. The variable user message is typically 500-3,000 tokens. Output is small (~150-400 tokens of JSON tool-use). At Sonnet 3.5 v2 list pricing, a cached classification call runs ~$0.005-0.015 per article; on Haiku 3.5 roughly 1/4 of that.",
+    "accuracy_disclaimer": "This classifier is a zero/few-shot LLM call against the IAB v3.1 list - it is not a fine-tuned model. Expect ~85-92% top-1 tier-1 agreement with expert labelers on news/editorial content; tier-3/4 accuracy is lower and confidence scores should be treated as soft signals, not calibrated probabilities. Always store the raw rationale alongside the IDs for audit.",
+    "validation_recommendations": [
+      "On every response, validate that every returned `id` exists in your local copy of the taxonomy. Reject and retry once if any ID is unknown.",
+      "Validate `tier_path` matches the canonical tier path for the returned `id` (defensive against the model paraphrasing tier names).",
+      "Reject responses where primary_category and any secondary_category share the same `id`.",
+      "Log low-confidence (<0.5) classifications for human review."
+    ],
+    "when_to_retune": [
+      "Top-1 tier-1 agreement on a labeled holdout drops below 85%.",
+      "IAB releases a new taxonomy version (rebuild the taxonomy block from the new TSV).",
+      "Publisher onboards a new vertical that is poorly represented in the current few-shot examples - add 1-2 vertical-specific examples.",
+      "Cost pressure - try downgrading the model_recommendation.default to Haiku and re-evaluate accuracy."
+    ]
+  }
+}
