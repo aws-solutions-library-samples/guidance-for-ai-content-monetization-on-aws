@@ -67,3 +67,5 @@ source/ui/coverage/
 **/.env.central
 source/agent/.env
 **/analytics_agent_arn.txt
+# CI pip cache
+.cache/
