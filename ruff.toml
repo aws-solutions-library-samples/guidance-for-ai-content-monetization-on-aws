@@ -1,0 +1,35 @@
+# Ruff linter configuration
+# https://docs.astral.sh/ruff/configuration/
+
+target-version = "py311"
+line-length = 120
+
+exclude = [
+    ".venv",
+    "__pycache__",
+    "cdk.out",
+    "dist",
+    "node_modules",
+    ".git",
+    "*.egg-info",
+    "internal-assets",
+    "lambda/content_management.py",
+    "tests/lambda_functions/test_local_lambda.py",
+    ".kiro"
+]
+
+[lint]
+# Start with a minimal rule set and expand over time
+select = ["E", "F", "I"]  # pycodestyle errors, pyflakes, isort
+ignore = [
+    "E501",   # line-too-long (handled by formatter)
+    "F401",   # unused-import (too many pre-existing, will clean up later)
+    "F841",   # local-variable-is-assigned-to-but-never-used (pre-existing)
+    "E402",   # module-import-not-at-top-of-file (CDK patterns)
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["E", "F", "I"]  # Relaxed rules for tests
+"scripts/*" = ["E", "F", "I"]  # Relaxed rules for scripts
+"lambda/*" = ["E", "F", "I"]  # Lambda handlers not modified in M0
+"analytics_agent/*" = ["E", "F", "I"]  # Agent refactor pending (Jeff's spec)

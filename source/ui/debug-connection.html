@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug IAB Analytics Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>Debug IAB Analytics Connection</h1>
+    
+    <div class="test info">
+        <h3>Environment Configuration</h3>
+        <div id="env-config">Loading...</div>
+    </div>
+    
+    <div class="test">
+        <h3>API Endpoint Test</h3>
+        <button onclick="testApiEndpoint()">Test API Endpoint</button>
+        <div id="api-test">Click button to test</div>
+    </div>
+    
+    <div class="test">
+        <h3>Authentication Test</h3>
+        <button onclick="testAuth()">Test Authentication</button>
+        <div id="auth-test">Click button to test</div>
+    </div>
+    
+    <div class="test">
+        <h3>Full Request Test</h3>
+        <button onclick="testFullRequest()">Test Analytics Request</button>
+        <div id="full-test">Click button to test</div>
+    </div>
+
+    <script>
+        // Display environment configuration
+        document.getElementById('env-config').innerHTML = `
+            <strong>API Base URL:</strong> ${window.location.protocol}//${window.location.host}<br>
+            <strong>Expected AWS URL:</strong> https://example123.execute-api.us-west-2.amazonaws.com/v1<br>
+            <strong>Analytics Endpoint:</strong> /analytics-agent/chat<br>
+            <strong>User Pool:</strong> us-west-2_EXAMPLE01<br>
+            <strong>Client ID:</strong> EXAMPLECLIENTID0123456789
+        `;
+
+        async function testApiEndpoint() {
+            const testDiv = document.getElementById('api-test');
+            testDiv.innerHTML = 'Testing...';
+            
+            try {
+                const response = await fetch('https://example123.execute-api.us-west-2.amazonaws.com/v1/analytics-agent/chat', {
+                    method: 'OPTIONS',
+                    headers: {
+                        'Origin': window.location.origin,
+                        'Access-Control-Request-Method': 'POST',
+                        'Access-Control-Request-Headers': 'Content-Type,Authorization'
+                    }
+                });
+                
+                testDiv.className = 'test success';
+                testDiv.innerHTML = `
+                    <h3>API Endpoint Test - SUCCESS</h3>
+                    <strong>Status:</strong> ${response.status}<br>
+                    <strong>CORS Headers:</strong> ${response.headers.get('access-control-allow-origin')}<br>
+                    <strong>Allowed Methods:</strong> ${response.headers.get('access-control-allow-methods')}
+                `;
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML = `
+                    <h3>API Endpoint Test - ERROR</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testAuth() {
+            const testDiv = document.getElementById('auth-test');
+            testDiv.innerHTML = 'Testing authentication...';
+            
+            try {
+                // Try to access the parent window's authentication
+                if (window.parent && window.parent !== window) {
+                    testDiv.innerHTML = 'This test needs to run in the main UI context. Open your UI at http://localhost:5173 and check the browser console.';
+                    return;
+                }
+                
+                testDiv.className = 'test info';
+                testDiv.innerHTML = `
+                    <h3>Authentication Test</h3>
+                    <p>To test authentication:</p>
+                    <ol>
+                        <li>Open your UI at <a href="http://localhost:5173" target="_blank">http://localhost:5173</a></li>
+                        <li>Check if you see a Cognito login screen</li>
+                        <li>If not, check browser console for errors</li>
+                        <li>After login, try the Analytics Assistant</li>
+                    </ol>
+                `;
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML = `
+                    <h3>Authentication Test - ERROR</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        async function testFullRequest() {
+            const testDiv = document.getElementById('full-test');
+            testDiv.innerHTML = 'Testing full request...';
+            
+            try {
+                const response = await fetch('https://example123.execute-api.us-west-2.amazonaws.com/v1/analytics-agent/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Note: This will fail without auth token, but we can see the error
+                    },
+                    body: JSON.stringify({
+                        message: 'test',
+                        pageContext: {}
+                    })
+                });
+                
+                const responseText = await response.text();
+                
+                if (response.status === 401) {
+                    testDiv.className = 'test info';
+                    testDiv.innerHTML = `
+                        <h3>Full Request Test - EXPECTED RESULT</h3>
+                        <strong>Status:</strong> ${response.status} (Unauthorized - this is expected without auth token)<br>
+                        <strong>Response:</strong> ${responseText}<br>
+                        <p><strong>This is good!</strong> The endpoint is working but requires authentication.</p>
+                    `;
+                } else {
+                    testDiv.className = 'test success';
+                    testDiv.innerHTML = `
+                        <h3>Full Request Test - SUCCESS</h3>
+                        <strong>Status:</strong> ${response.status}<br>
+                        <strong>Response:</strong> <pre>${responseText}</pre>
+                    `;
+                }
+            } catch (error) {
+                testDiv.className = 'test error';
+                testDiv.innerHTML = `
+                    <h3>Full Request Test - ERROR</h3>
+                    <pre>${error.message}</pre>
+                `;
+            }
+        }
+
+        // Auto-run basic tests
+        window.onload = function() {
+            testApiEndpoint();
+        };
+    </script>
+</body>
+</html>

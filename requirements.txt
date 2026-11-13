@@ -1,0 +1,14 @@
+aws-cdk-lib>=2.100.0,<=2.170.0
+cdk-nag>=2.27.0,<3.0.0
+constructs>=10.0.0
+boto3>=1.35.0
+python-dotenv>=1.0.0
+pyyaml>=6.0
+
+# Development dependencies
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+faker>=19.0.0
+moto[dynamodb]>=5.0.0
+PyJWT>=2.8.0
+opensearch-py>=2.6.0

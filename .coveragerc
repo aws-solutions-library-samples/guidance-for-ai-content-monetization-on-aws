@@ -1,0 +1,16 @@
+# Non-gating per-module coverage config (GitLab #11, Requirement 11).
+# Visibility only — no fail-under threshold. Excludes vendored/deprecated/parked trees (Req 11.4).
+[run]
+source =
+    source/lambda
+    source/mock_data_generator
+omit =
+    source/lambda/python/*
+    source/lambda/utils_deprecated/*
+    source/agent/*
+    */__pycache__/*
+    */tests/*
+
+[report]
+show_missing = True
+skip_covered = False
