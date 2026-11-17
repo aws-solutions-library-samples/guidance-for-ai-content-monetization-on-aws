@@ -1,0 +1,12 @@
+# Publisher Content
+
+> A curated map of the publisher's most important AI-accessible content.
+
+## Optional
+
+No optional content is currently listed.
+
+## Access
+
+- Discovery API: `/info`
+- Content query: `/query`

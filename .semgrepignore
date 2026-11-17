@@ -1,0 +1,5 @@
+# Semgrep ignore patterns
+# Deployment scripts are developer CLI tools, not web services.
+# subprocess calls in these files are safe — they use list-form and
+# execute known commands (pip, cdk, npm), not user-controlled input.
+deployment/agent/

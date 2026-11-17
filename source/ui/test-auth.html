@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test IAB Cognito Authentication</title>
+</head>
+<body>
+    <h1>IAB Cognito Authentication Test</h1>
+    <div id="status">Loading...</div>
+    
+    <script>
+        // Test the current environment configuration
+        const config = {
+            userPoolId: 'us-west-2_EXAMPLE01',
+            clientId: 'EXAMPLECLIENTID0123456789',
+            region: 'us-west-2',
+            apiUrl: 'https://example123.execute-api.us-west-2.amazonaws.com/v1'
+        };
+        
+        document.getElementById('status').innerHTML = `
+            <h2>Configuration:</h2>
+            <ul>
+                <li><strong>User Pool ID:</strong> ${config.userPoolId}</li>
+                <li><strong>Client ID:</strong> ${config.clientId}</li>
+                <li><strong>Region:</strong> ${config.region}</li>
+                <li><strong>API URL:</strong> ${config.apiUrl}</li>
+            </ul>
+            
+            <h2>Next Steps:</h2>
+            <ol>
+                <li>Make sure your UI dev server is running</li>
+                <li>Navigate to your UI at <a href="http://localhost:5173">http://localhost:5173</a></li>
+                <li>You should see a Cognito login screen</li>
+                <li>After logging in, try the Analytics Assistant</li>
+            </ol>
+            
+            <h2>If you see authentication errors:</h2>
+            <ul>
+                <li>Clear browser cache and localStorage</li>
+                <li>Try incognito/private browsing</li>
+                <li>Check browser console for errors</li>
+            </ul>
+        `;
+    </script>
+</body>
+</html>

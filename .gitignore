@@ -1,27 +1,71 @@
-### vsCode ###
-.vscode
-
-### macOS ###
-# General
-.DS_Store
-.AppleDouble
-.LSOverride
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-**/node_modules
-**/dist
-**/build
-**/.DS_Store
-**/.angular
-**/.idea
+.venv
 cdk.out
-**/data/**.csv
-
+__pycache__
+medialake-deployment
+.DS_Store
+node_modules
+.vscode
+.kiro/settings/
+dist
+build
+.angular
+.idea
 .env
+.env.production
+.env.development
+.env.local
+.env.back*
+generated-diagrams
+**/data/**.csv
+examples/07-AgentCore-E2E
+examples/hosting_mcp_server.ipynb
+
+# MCP Server config files with sensitive data
+mcp_server/*_config.json
+mcp_server/deployment-config.json
+mcp_server/agentcore_response.json
+mcp_server/response.json
+mcp_server/publisher_mcp_arn.txt
+mcp_server/integrated_mcp_deployment.json
+mcp_server/integrated_mcp_arn.txt
+
+# Also exclude test configs to be safe (they may contain real data)
+mcp_server/test_*.json
+
+# Keep example/template files
+!mcp_server/*.example
+.scratch
+
+analytics_agent/analytics_agent_deployment.json
+analytics_agent/deployment_config.json
+analytics_agent/gateway_config.json
+analytics_agent/identity_config.json
+analytics_agent/test_response.json
+analytics_agent/analytics_memory_deployment.json
+
+source/lambda/python
+source/lambda/*.zip
+analytics_agent/analytics_agent_arn.txt
+.pytest_cache
+.ruff_cache
+# CI pip cache (PIP_CACHE_DIR in .gitlab-ci.yml); never ship
+.cache/
+templates
+test-results.xml
+integration-results.xml
+ruff-codequality.json
+ruff-results.xml
+.coverage
+coverage.xml
+htmlcov/
+source/ui/coverage/
+# ASH scanner config: track .ash.yaml, ignore everything else under .ash/
+.ash/*
+!.ash/.ash.yaml
+
+# agents
+# deploy-local agent state (account IDs, ARNs, ECR repos) — never publish
+.bedrock_agentcore.yaml
+**/.env.central
+source/agent/.env
+**/analytics_agent_arn.txt

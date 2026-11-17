@@ -1,0 +1,36 @@
+# Gitleaks ignore — test fixtures, documentation examples, and placeholder keys
+# These are NOT real secrets. They are test API keys, example values in docs,
+# and CDK-generated placeholder strings.
+#
+# Entries are gitleaks finding fingerprints (SHA of commit:path:rule:line) OR,
+# below, path globs for vendored third-party code that is not our source.
+
+# ---- Vendored dependencies (bundled at package time; .gitignore line 46) ----
+# source/lambda/python/ is the pip-installed boto3/botocore/jwt layer bundled
+# into the Lambda zip. Its *.dist-info and botocore example fixtures (waf, kms,
+# iam, sts examples-1.json) carry AWS SDK sample ARNs/tokens that gitleaks flags
+# as generic-api-key / aws-access-token. They are AWS's own doc fixtures, not
+# our secrets. Exclude the whole vendored tree.
+source/lambda/python/
+
+# Test fixture key used across test files and documentation examples
+7dd4e9fcb29ca3059953bd7dae1e3288bbfeece0
+# UI dashboard mock/example API key references
+77c93e199d6d71ad1428efc8aa7553f0a9ce80a4
+# Spec design doc example API key
+5ac537eca732e64ba334aafc1d71caff4e971938
+# README example API key
+3184da049ba79a6cacaf24f99de2c2b22220297f
+# Documentation authentication guide example
+71ca4f4421a606c2bf81c27e370fad47cda47cc4
+
+# ---- Additional test/doc placeholder keys (Probe dev-20261013) ----
+# Sibling fake keys in auth/bot-detector/hybrid-logging/list-content tests and
+# the log-redaction fixture — generated placeholders, never live credentials.
+ba572b6f15fe9f9553669cb23157977323c23c1f
+591bf7afbef1d55c2984a32e1eea300f1c991f14
+17fcf0840d671cf6f47fbf612960841060ec4a72
+2b7d0ae04c532fbedadbbbd55f9821fce1273705
+# cdk.json context placeholder strings (CDK-generated, not secrets)
+eef2337dcd5f008a3cd15f6d8d4094e721585876
+9a78fe319175f71580b9566239c169d6a0e3902e
